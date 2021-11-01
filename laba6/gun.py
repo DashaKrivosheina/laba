@@ -8,7 +8,7 @@ FPS = 30
 
 RED = (255, 100, 100)
 BLUE = (140, 220, 250)
-YELLOW = (240, 240, 80)
+YELLOW = (240, 150, 80)
 GREEN = (90, 240, 100)
 MAGENTA = (190, 100, 205)
 CYAN = (110, 250, 200)
@@ -183,7 +183,7 @@ class Target:
 class Star:
     '''Новый тип мишени'''
     def __init__(self):
-        self.x = randint(350, 750)
+        self.x = randint(50, 750)
         self.y = randint(35, 550)
         self.R = randint (20, 35)
         self.Vx = randint(-20, 20)
