@@ -309,10 +309,10 @@ class Bomb(Ball):
         self.x = gun.x
         self.y = 6
         self.vx = 0
-        self.vy = randint(1,2)
-        self.r = randint(3,5)
+        self.vy = 1/20*randint(10,20)
+        self.r = 4 #randint(3,5)
     def expmove(self, gun):
-        """Движение бомбы: просто падает до столкновения с танком, а в конце взрывается"""
+        """Движение бомбы: просто падает до столкновения с танком"""
         self.live = not self.hittest(gun)
         if self.y+self.r >= HEIGHT:
             self.live = 0
@@ -320,7 +320,11 @@ class Bomb(Ball):
             self.color = BLACK
             self.move()
         else:
-            self.new_bomb(gun1)     
+            self.new_bomb(gun)
+    def hit(self, gun):
+        if (self.x- gun.x)**2 + (self.y - gun.y)**2 <= 140 and self.y>=WALL:
+            return True
+    
 star = Star()
 '''Заставка'''
 pygame.init()
@@ -374,7 +378,7 @@ while not done:
     pygame.draw.rect(screen, color, input_box, 2)
     pygame.display.flip()
     clock.tick(30)
-    
+m=7  
 bullet = 0
 balls = []
 targets = []
@@ -383,7 +387,9 @@ shards = []
 gun1 = Gun(screen)
 gun2 = Gun(screen)
 bomb = Bomb()
+bomb1 = Bomb()
 bomb.new_bomb(gun1)
+bomb1.new_bomb(gun2)
 
 for i in range(5):
     targets.append(Target())
@@ -399,6 +405,8 @@ while not finished:
     gun2.move()
     bomb.expmove(gun1)
     bomb.draw()
+    bomb1.expmove(gun2)
+    bomb1.draw()
     star.draw_star()
     star.move_star()
     for target in targets:
@@ -413,13 +421,28 @@ while not finished:
             l.draw()
         else:
             lasers.remove(l)
+    if bomb.hit(gun1):
+        m -= 1
+    if bomb1.hit(gun2):
+        m -= 1
+    if m<0:
+        screen.fill((250, 200, 200))#WHITE)
+        font=pygame.font.Font(None, 72)
+        scorevalue="Game Over"
+        scoreboard=font.render(scorevalue, True, RED)
+        screen.blit(scoreboard, (250, 250))
+        finished = True
+        pygame.display.update()
+        pygame.time.delay(2000)
     score = score0
     star.life -= 1
     for target in targets:
         score += target.points
     """Вывод счетчика на экран"""
     text1 = f1.render('Score: ' + str(score), True, (0, 0, 0))
+    text2 = f1.render('Lives: ' + str( m), True, RED)
     screen.blit(text1, (10, 20))
+    screen.blit(text2, (700, 20))
     pygame.display.update()
     clock.tick(FPS)
     
@@ -438,6 +461,21 @@ while not finished:
                 gun1.vy = -5
             elif pygame.key.get_pressed()[pygame.K_DOWN]:
                 gun1.vy = 5
+                
+        if event.type == pygame.KEYUP:
+            if (not pygame.key.get_pressed()[pygame.K_d]) and (not pygame.key.get_pressed()[pygame.K_a]):
+                gun2.vx = 0
+            if (not pygame.key.get_pressed()[pygame.K_w]) and (not pygame.key.get_pressed()[pygame.K_s]):
+                gun2.vy = 0
+        if event.type == pygame.KEYDOWN:
+            if pygame.key.get_pressed()[pygame.K_d]:
+                gun2.vx = 5
+            elif pygame.key.get_pressed()[pygame.K_a]:
+                gun2.vx = -5
+            if pygame.key.get_pressed()[pygame.K_w]:
+                gun2.vy = -5
+            elif pygame.key.get_pressed()[pygame.K_s]:
+                gun2.vy = 5
 
         if event.type == pygame.KEYDOWN:
             if pygame.key.get_pressed()[pygame.K_1]:
@@ -450,10 +488,14 @@ while not finished:
             finished = True
         elif event.type == pygame.MOUSEBUTTONDOWN:
             gun1.fire2_start(event)
+            gun2.fire2_start(event)
         elif event.type == pygame.MOUSEBUTTONUP:
             gun1.fire2_end(event)
+            gun2.fire2_end(event)
         elif event.type == pygame.MOUSEMOTION:
             gun1.targetting(event)
+            gun2.targetting(event)
+              
     if star.life<=0:
         star = Star()
     """Проверка столкновений"""
@@ -471,10 +513,11 @@ while not finished:
     for l in lasers:
         l.move()
         for target in targets:
-            if target.hittest(i):
+            if l.hittest(target):
                 target.hit()
                 target.new_target()
     gun1.power_up()
+    gun2.power_up()
 
 '''рэйтинг'''
 rating = open('top_list.txt', 'w')
@@ -490,7 +533,7 @@ rating.close()
 screen.fill(WHITE)
 text = []
 for line in data:
-    text.append(f1.render(line, True, BLACK))
+    text.append(f1.render(line, True, RED))
 finished = False
 while not finished:
     clock.tick(FPS)
